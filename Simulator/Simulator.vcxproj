@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{cd6ddfd4-926f-46e2-8a14-99fbd7563b2e}</ProjectGuid>
+    <RootNamespace>Simulator</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\Simulator\build-vs-debug\bin\</OutDir>
+    <IntDir>Simulator\Debug\</IntDir>
+    <TargetName>Simulator</TargetName>
+    <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath)</ExecutablePath>
+    <ReferencePath>$(VC_ReferencesPath_x64);</ReferencePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\Simulator\build-vs-debug\bin\</OutDir>
+    <IntDir>Simulator\Debug\</IntDir>
+    <TargetName>Simulator</TargetName>
+    <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath)</ExecutablePath>
+    <ReferencePath>$(VC_ReferencesPath_x64);</ReferencePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\Simulator\build-vs-debug\bin\</OutDir>
+    <IntDir>Simulator\Debug\</IntDir>
+    <TargetName>Simulator</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\Simulator\build-vs-debug\bin\</OutDir>
+    <IntDir>Simulator\Debug\</IntDir>
+    <TargetName>Simulator</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>
+      </SDLCheck>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_UNICODE;UNICODE;NOMINMAX;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>Default</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\OpenVR\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\Json\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\GLM\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\Glew\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\D3DX12\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\cxxopts\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <OmitFramePointers />
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <UseFullPaths>false</UseFullPaths>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\lib\x86_64\Debug\ImGui.lib;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\lib\x86_64\Debug\ImGuiBackends.lib;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\lib\VarjoLib.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;windowscodecs.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ProgramDatabaseFile>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\Simulator\build-vs-debug\bin\Simulator.pdb</ProgramDatabaseFile>
+      <ImportLibrary>C:/Users/acevedo/Desktop/varjo-sdk/build-vs-debug/MRExample/Debug/MRExample.lib</ImportLibrary>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>
+      </FunctionLevelLinking>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <SDLCheck>
+      </SDLCheck>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_UNICODE;UNICODE;NOMINMAX;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>Default</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\OpenVR\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\Json\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\GLM\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\Glew\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\D3DX12\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\cxxopts\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <OmitFramePointers />
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <UseFullPaths>false</UseFullPaths>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>
+      </EnableCOMDATFolding>
+      <OptimizeReferences>
+      </OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\lib\x86_64\Debug\ImGui.lib;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\lib\x86_64\Debug\ImGuiBackends.lib;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\lib\VarjoLib.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;windowscodecs.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ProgramDatabaseFile>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\Simulator\build-vs-debug\bin\Simulator.pdb</ProgramDatabaseFile>
+      <ImportLibrary>C:/Users/acevedo/Desktop/varjo-sdk/build-vs-debug/MRExample/Debug/MRExample.lib</ImportLibrary>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>
+      </SDLCheck>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_UNICODE;UNICODE;NOMINMAX;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>Default</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <SupportJustMyCode>false</SupportJustMyCode>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <AdditionalIncludeDirectories>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\OpenVR\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\Json\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\GLM\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\Glew\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\D3DX12\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\cxxopts\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\lib\x86_64\Debug\ImGui.lib;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\lib\x86_64\Debug\ImGuiBackends.lib;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\lib\VarjoLib.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;windowscodecs.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <SDLCheck>
+      </SDLCheck>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_UNICODE;UNICODE;NOMINMAX;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>Default</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <AdditionalIncludeDirectories>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\OpenVR\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\Json\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\GLM\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\Glew\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\D3DX12\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\cxxopts\include;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\lib\x86_64\Debug\ImGui.lib;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\vendor\ImGui\lib\x86_64\Debug\ImGuiBackends.lib;C:\Users\acevedo\Documents\Visual Studio 2019\Varjo\lib\VarjoLib.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;windowscodecs.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="src\AppLogic.hpp" />
+    <ClInclude Include="src\AppState.hpp" />
+    <ClInclude Include="src\AppView.hpp" />
+    <ClInclude Include="src\CameraManager.hpp" />
+    <ClInclude Include="src\ChromaKeyManager.hpp" />
+    <ClInclude Include="src\D3D11MultiLayerView.hpp" />
+    <ClInclude Include="src\D3D11Renderer.hpp" />
+    <ClInclude Include="src\D3D11Shaders.hpp" />
+    <ClInclude Include="src\DataStreamer.hpp" />
+    <ClInclude Include="src\ExampleShaders.hpp" />
+    <ClInclude Include="src\GfxContext.hpp" />
+    <ClInclude Include="src\Globals.hpp" />
+    <ClInclude Include="src\HeadlessView.hpp" />
+    <ClInclude Include="src\MarkerTracker.hpp" />
+    <ClInclude Include="src\MRScene.hpp" />
+    <ClInclude Include="src\MultiLayerView.hpp" />
+    <ClInclude Include="src\Renderer.hpp" />
+    <ClInclude Include="src\Scene.hpp" />
+    <ClInclude Include="src\SyncView.hpp" />
+    <ClInclude Include="src\UI.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\AppLogic.cpp" />
+    <ClCompile Include="src\AppView.cpp" />
+    <ClCompile Include="src\CameraManager.cpp" />
+    <ClCompile Include="src\ChromaKeyManager.cpp" />
+    <ClCompile Include="src\D3D11MultiLayerView.cpp" />
+    <ClCompile Include="src\D3D11Renderer.cpp" />
+    <ClCompile Include="src\D3D11Shaders.cpp" />
+    <ClCompile Include="src\DataStreamer.cpp" />
+    <ClCompile Include="src\GfxContext.cpp" />
+    <ClCompile Include="src\Globals.cpp" />
+    <ClCompile Include="src\HeadlessView.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\MarkerTracker.cpp" />
+    <ClCompile Include="src\MRScene.cpp" />
+    <ClCompile Include="src\MultiLayerView.cpp" />
+    <ClCompile Include="src\Renderer.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\SyncView.cpp" />
+    <ClCompile Include="src\UI.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
