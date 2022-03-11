@@ -11,6 +11,8 @@
 #include "AppLogic.hpp"
 #include "AppView.hpp"
 
+
+
 // Common main function called from the entry point
 void commonMain()
 {

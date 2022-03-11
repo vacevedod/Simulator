@@ -16,6 +16,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include "D3D11MultiLayerView.hpp"
+#include "GLMultiLayerView.hpp"
 
 // VarjoExamples namespace contains simple example wrappers for using Varjo API features.
 // These are only meant to be used in SDK example applications. In your own application,
@@ -66,12 +67,17 @@ bool AppLogic::init(GfxContext& context)
 
         // Create D3D11 renderer instance.
         auto d3d11Renderer = std::make_unique<D3D11Renderer>(dxgiAdapter.Get());
+        //auto glRenderer = std::make_shared<GLRenderer>(m_session, rendererSettings);
+        auto glRenderer = std::make_shared<GLRenderer>(m_session);
 
         // Create varjo multi layer view
         m_varjoView = std::make_unique<D3D11MultiLayerView>(m_session, *d3d11Renderer);
+        m_varjoView = std::make_shared<GLMultiLayerView>(m_session, *glRenderer);
 
         // Store as generic renderer
-        m_renderer = std::move(d3d11Renderer);
+        //m_renderer = std::move(d3d11Renderer);
+        m_renderer = std::move(glRenderer);
+
     }
 
     // Create scene instance
@@ -90,6 +96,41 @@ bool AppLogic::init(GfxContext& context)
     if (varjo_HasProperty(m_session, varjo_PropertyKey_MRAvailable)) {
         mixedRealityAvailable = varjo_GetPropertyBool(m_session, varjo_PropertyKey_MRAvailable);
     }
+
+    /*
+    // Check mixed reality availability
+     if (mixedRealityAvailable == varjo_True) {
+        printf("Varjo MR available!\n");
+
+        // Enable VST rendering if used
+        if (useVstRender) {
+            printf("Enabling VST rendering.\n");
+            varjo_MRSetVideoRender(session, varjo_True);
+        }
+
+        // Enable VST depth testing if used
+        if (useVstDepth) {
+            // Check for required flags
+            if (!useDepth) {
+                printf("ERROR: Depth is required for VST depth testing\n\n");
+                printf("%s", options.help().c_str());
+                exit(EXIT_FAILURE);
+            }
+
+         printf("Enabling VST depth occlusion.\n");
+        varjo_MRSetVideoDepthEstimation(session, varjo_True);
+            }
+        }
+        else {
+            printf("ERROR: Varjo MR capabilities not available.\n");
+            exit(EXIT_FAILURE);
+     }
+            */
+    /*
+    uint32_t IRenderer::getTotalViewportsWidth() const { return (std::max)(getAtlasWidth(m_viewports), getAtlasWidth(m_foveatedViewports)); }
+    uint32_t IRenderer::getTotalViewportsHeight() const { return (std::max)(getAtlasHeight(m_viewports), getAtlasHeight(m_foveatedViewports)); }
+    */
+
 
     // Handle mixed reality availability
     onMixedRealityAvailable(mixedRealityAvailable == varjo_True, false);
@@ -123,6 +164,7 @@ void AppLogic::setVideoRendering(bool enabled)
     }
     m_appState.options.videoRenderingEnabled = enabled;
 }
+
 
 void AppLogic::setState(const AppState& appState, bool force)
 {

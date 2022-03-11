@@ -18,6 +18,8 @@
 #include "GfxContext.hpp"
 #include "MRScene.hpp"
 
+#include "GLRenderer.hpp"
+
 //! Application logic class
 class AppLogic
 {
@@ -66,6 +68,7 @@ private:
 private:
     varjo_Session* m_session{nullptr};                           //!< Varjo session
     std::unique_ptr<VarjoExamples::D3D11Renderer> m_renderer;    //!< Renderer instance
+    std::unique_ptr<VarjoExamples::GLRenderer> m_glRenderer;
     std::unique_ptr<VarjoExamples::MultiLayerView> m_varjoView;  //!< Varjo layer ext view instance
     AppState m_appState{};                                       //!< Application state
 

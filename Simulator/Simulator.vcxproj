@@ -222,6 +222,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="GLMultiLayerView.hpp" />
     <ClInclude Include="src\AppLogic.hpp" />
     <ClInclude Include="src\AppState.hpp" />
     <ClInclude Include="src\AppView.hpp" />
@@ -234,6 +235,7 @@
     <ClInclude Include="src\ExampleShaders.hpp" />
     <ClInclude Include="src\GfxContext.hpp" />
     <ClInclude Include="src\Globals.hpp" />
+    <ClInclude Include="src\GLRenderer.hpp" />
     <ClInclude Include="src\HeadlessView.hpp" />
     <ClInclude Include="src\MarkerTracker.hpp" />
     <ClInclude Include="src\MRScene.hpp" />
@@ -244,6 +246,7 @@
     <ClInclude Include="src\UI.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="GLMultiLayerView.cpp" />
     <ClCompile Include="src\AppLogic.cpp" />
     <ClCompile Include="src\AppView.cpp" />
     <ClCompile Include="src\CameraManager.cpp" />
@@ -254,6 +257,7 @@
     <ClCompile Include="src\DataStreamer.cpp" />
     <ClCompile Include="src\GfxContext.cpp" />
     <ClCompile Include="src\Globals.cpp" />
+    <ClCompile Include="src\GLRenderer.cpp" />
     <ClCompile Include="src\HeadlessView.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MarkerTracker.cpp" />

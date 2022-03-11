@@ -30,6 +30,7 @@ constexpr float r = d * 0.5f;
 // clang-format off
 
 // Vertex data for cube (position + color)
+/*
 const std::vector<float> c_cubeVertexData = {
     -r, -r, -r,     0, 0, 0,
     -r, -r, r,      0, 0, 1,
@@ -42,6 +43,7 @@ const std::vector<float> c_cubeVertexData = {
 };
 
 // Index data for cube
+
 const std::vector<unsigned int> c_cubeIndexData = {
     0, 2, 1,
     1, 2, 3,
@@ -56,14 +58,14 @@ const std::vector<unsigned int> c_cubeIndexData = {
     1, 3, 7,
     1, 7, 5,
 };
-
+*/
 // clang-format on
 
 }  // namespace
 
 MRScene::MRScene(Renderer& renderer)
     : m_renderer(renderer)
-    , m_cubeMesh(renderer.createMesh(c_cubeVertexData, sizeof(float) * 6, c_cubeIndexData, Renderer::PrimitiveTopology::TriangleList))
+    //, m_cubeMesh(renderer.createMesh(c_cubeVertexData, sizeof(float) * 6, c_cubeIndexData, Renderer::PrimitiveTopology::TriangleList))
     , m_cubeShader(renderer.getShaders().createShader(ExampleShaders::ShaderType::RainbowCube))
     , m_cubemapCubeShader(renderer.getShaders().createShader(ExampleShaders::ShaderType::CubemappedCube))
     , m_solidShader(renderer.getShaders().createShader(ExampleShaders::ShaderType::SolidCube))
@@ -138,7 +140,7 @@ void MRScene::onUpdate(double frameTime, double deltaTime, int64_t frameCounter,
             }
         }
     }
-
+    
     m_cubemapCube.pose.position = {-1.0, 1.5, 0.0};
     m_cubemapCube.pose.scale = {0.5f, 0.5f, 0.5f};
     m_cubemapCube.color = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -169,9 +171,9 @@ void MRScene::onRender(
 {
     // Bind the cube shader
     renderer.bindShader(*m_cubeShader);
-    /*
+    
     // Render cubes
-    for (const auto& object : m_cubes) {
+   /* for (const auto& object : m_cubes) {
         // Calculate model transformation
         glm::mat4x4 modelMat(1.0f);
         modelMat = glm::translate(modelMat, object.pose.position);
@@ -190,7 +192,7 @@ void MRScene::onRender(
         constants.ps.wbNormalization = m_wbNormalization;
 
         renderer.renderMesh(*m_cubeMesh, constants.vs, constants.ps);
-    }
+    }*/
 
     // Render unit vectors
     m_renderer.bindShader(*m_solidShader);
@@ -208,7 +210,7 @@ void MRScene::onRender(
         constants.vs.vtxColorFactor = object.vtxColorFactor;
         constants.vs.objectColor = object.color;
 
-        renderer.renderMesh(*m_cubeMesh, constants.vs, constants.ps);
+        //renderer.renderMesh(*m_cubeMesh, constants.vs, constants.ps);
     }
 
     // Render cubemapped cube if HDR cubemap is available.
@@ -231,6 +233,6 @@ void MRScene::onRender(
         constants.ps.exposureGain = m_exposureGain;
         constants.ps.wbNormalization = m_wbNormalization;
 
-        renderer.renderMesh(*m_cubeMesh, constants.vs, constants.ps);
-    }*/
+        //renderer.renderMesh(*m_cubeMesh, constants.vs, constants.ps);
+    }
 }
