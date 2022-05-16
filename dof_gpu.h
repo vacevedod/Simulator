@@ -25,11 +25,13 @@ void testKernel();
 void normalizeDepth(float* depth, float* depth_out, unsigned int step, float min_distance, float max_distance, unsigned int width, unsigned height);
 
 // GPU convolution
-void convolutionRows(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* i_depth, int imageW, int imageH, int depth_pitch, float focus_point, int kernelRad);
-void convolutionColumns(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* i_depth, int imageW, int imageH, int depth_pitch, float focus_point, int kernelRad);
+void convolutionRows(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* i_depth, int imageW, int imageH, int depth_pitch, float focus_point, int kernelRad, bool full,float*g, int gpitch);
+void convolutionColumns(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* i_depth, int imageW, int imageH, int depth_pitch, float focus_point, int kernelRad, bool full,float* g,int gpitch);
 
-void contrast(sl::uchar4* src, sl::uchar4* dst, int imageW, int imageH, unsigned int step,  float p);
+void contrast(sl::uchar4* src, sl::uchar4* dst, sl::uchar4* dst2, int imageW, int imageH, unsigned int step,  float p, float* g, int pitchdepth);
+void vignetteRows(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* i_depth, int imageW, int imageH, int depth_pitch);
 
+void convolutionpsfColumns(cv::cuda::GpuMat& d_Dst, cv::cuda::GpuMat& d_Src, cv::cuda::GpuMat& d_Src2, int imageW, int imageH, int kernelRad);
 
 
 #endif //DOF_GPU_H
