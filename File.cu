@@ -50,6 +50,7 @@ __global__ void _k_normalizeDepth(float* depth, float* depth_norm, unsigned int 
         depth_norm[x_local + y_local * step] = depth_normalized;
 }
 
+
 void normalizeDepth(float* depth, float* depth_out, unsigned int step, float min_distance, float max_distance, unsigned int width, unsigned height) {
     dim3 dimGrid, dimBlock;
 
@@ -61,6 +62,7 @@ void normalizeDepth(float* depth, float* depth_out, unsigned int step, float min
 
     _k_normalizeDepth << <dimGrid, dimBlock, 0 >> > (depth, depth_out, step, min_distance, max_distance, width, height);
 }
+
 
 
 
@@ -106,7 +108,7 @@ __global__ void _k_convolutionRows(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* 
     for (int i = ROWS_HALO_STEPS; i < ROWS_HALO_STEPS + ROWS_RESULT_STEPS; i++) {
         sl::float3 sum(0, 0, 0);
         int kernel_radius;
-        full == true ? kernel_radius = floorf((KERNEL_RADIUS)) : kernel_radius = floorf((KERNEL_RADIUS)*fabs(depth[i * ROWS_BLOCKDIM_X] - focus_depth));
+        full  ? kernel_radius = floorf((KERNEL_RADIUS)) : kernel_radius = floorf((KERNEL_RADIUS)*fabs(depth[i * ROWS_BLOCKDIM_X] - focus_depth));
         //int kernel_radius = floorf((KERNEL_RADIUS)*fabs(depth[i * ROWS_BLOCKDIM_X] - focus_depth));
         int kernel_mid = kernel_radius * kernel_radius - 1 + kernel_radius;
         if (kernel_radius > 0) {
@@ -121,20 +123,51 @@ __global__ void _k_convolutionRows(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* 
             sum.y = (float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].y;
             sum.z = (float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].z;
         }
-        if (full) {
-            d_Dst[i * ROWS_BLOCKDIM_X].x = (sum.x *  g[i * ROWS_BLOCKDIM_X]) + ((float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].x * abs(1 - g[i * ROWS_BLOCKDIM_X]));
-            d_Dst[i * ROWS_BLOCKDIM_X].y = (sum.y * g[i * ROWS_BLOCKDIM_X]) + ((float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].y * abs(1 - g[i * ROWS_BLOCKDIM_X]));
-            d_Dst[i * ROWS_BLOCKDIM_X].z = (sum.z * g[i * ROWS_BLOCKDIM_X]) + ((float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].z * abs(1 - g[i * ROWS_BLOCKDIM_X]));
-            d_Dst[i * ROWS_BLOCKDIM_X].w = 0;
-        }
-        else {
-            d_Dst[i * ROWS_BLOCKDIM_X].x = (sum.x)*g[i * ROWS_BLOCKDIM_X];
-            d_Dst[i * ROWS_BLOCKDIM_X].y = (sum.y)*g[i * ROWS_BLOCKDIM_X];
-            d_Dst[i * ROWS_BLOCKDIM_X].z = (sum.z)*g[i * ROWS_BLOCKDIM_X];
-            d_Dst[i * ROWS_BLOCKDIM_X].w = 0;
+        //if (full==0)
+        //{
+        //NORMAL
+            //d_Dst[i * ROWS_BLOCKDIM_X].x = (float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].x;
+            //d_Dst[i * ROWS_BLOCKDIM_X].y = (float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].y;
+            //d_Dst[i * ROWS_BLOCKDIM_X].z = (float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].z;
+            //d_Dst[i * ROWS_BLOCKDIM_X].w = 0;
+        //
+        //}
+        //else{
+        // FOCUS DEPTH
+            //d_Dst[i * ROWS_BLOCKDIM_X].x = (sum.x) ;
+            //d_Dst[i * ROWS_BLOCKDIM_X].y = (sum.y) ;
+            //d_Dst[i * ROWS_BLOCKDIM_X].z = (sum.z) ;
+            //d_Dst[i * ROWS_BLOCKDIM_X].w = 0;
 
+        //}
+        //case 2:
+        //BLUR TUNNEL 
+            d_Dst[i * ROWS_BLOCKDIM_X].x = (sum.x * abs(1 - g[i * ROWS_BLOCKDIM_X])  + ((float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].x* g[i * ROWS_BLOCKDIM_X]));
+            d_Dst[i * ROWS_BLOCKDIM_X].y = (sum.y * abs(1 - g[i * ROWS_BLOCKDIM_X]) + ((float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].y * g[i * ROWS_BLOCKDIM_X]));
+            d_Dst[i * ROWS_BLOCKDIM_X].z = (sum.z * abs(1 - g[i * ROWS_BLOCKDIM_X]) + ((float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].z * g[i * ROWS_BLOCKDIM_X]));
+            d_Dst[i * ROWS_BLOCKDIM_X].w = 0;
+        //    break;
+
+        //case 3:
+        //BLACK TUNNEL VISION
+            //d_Dst[i * ROWS_BLOCKDIM_X].x = (sum.x) * g[i * ROWS_BLOCKDIM_X];
+            //d_Dst[i * ROWS_BLOCKDIM_X].y = (sum.y) * g[i * ROWS_BLOCKDIM_X];
+            //d_Dst[i * ROWS_BLOCKDIM_X].z = (sum.z) * g[i * ROWS_BLOCKDIM_X];
+            //d_Dst[i * ROWS_BLOCKDIM_X].w = 0;
+
+        //    break;
+
+
+        //default:
+        //    d_Dst[i * ROWS_BLOCKDIM_X].x = (float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].x;
+        //    d_Dst[i * ROWS_BLOCKDIM_X].y = (float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].y;
+        //    d_Dst[i * ROWS_BLOCKDIM_X].z = (float)s_Data[threadIdx.y][threadIdx.x + i * ROWS_BLOCKDIM_X].z;
+        //    d_Dst[i * ROWS_BLOCKDIM_X].w = 0;
+        //    break;
+        //} 
+           
+               
         
-        }
     }
 }
 
@@ -150,7 +183,7 @@ void convolutionRows(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* i_depth, int i
 #define COLUMNS_RESULT_STEPS 2
 #define   COLUMNS_HALO_STEPS 4
 
-__global__ void _k_convolutionColumns(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* depth, int imageW, int imageH, int pitch, int pitch_depth, float focus_depth, int KERNEL_RADIUS,bool full,float*g, int gpitch) {
+__global__ void _k_convolutionColumns(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* depth, int imageW, int imageH, int pitch, int pitch_depth, float focus_depth, int KERNEL_RADIUS, bool full, float* g, int gpitch) {
     __shared__ sl::uchar4 s_Data[COLUMNS_BLOCKDIM_X][(COLUMNS_RESULT_STEPS + 2 * COLUMNS_HALO_STEPS) * COLUMNS_BLOCKDIM_Y + 1];
     sl::uchar4 reset(0, 0, 0, 0);
     //Offset to the upper halo edge
@@ -186,33 +219,61 @@ __global__ void _k_convolutionColumns(sl::uchar4* d_Dst, sl::uchar4* d_Src, floa
         sl::float3 sum(0, 0, 0);
         int kernel_radius;
         //int kernel_radius = floorf((KERNEL_RADIUS)*fabs(depth[i * COLUMNS_BLOCKDIM_Y * pitch] - focus_depth));
-        full == true ? kernel_radius = floorf((KERNEL_RADIUS)): kernel_radius = floorf((KERNEL_RADIUS)*fabs(depth[i * COLUMNS_BLOCKDIM_Y * pitch] - focus_depth));
+        full  ? kernel_radius = floorf((KERNEL_RADIUS)) : kernel_radius = floorf((KERNEL_RADIUS)*fabs(depth[i * COLUMNS_BLOCKDIM_Y * pitch] - focus_depth));
         int kernel_mid = kernel_radius * kernel_radius - 1 + kernel_radius;
 
         if (kernel_radius > 0) {
             for (int j = -kernel_radius; j <= kernel_radius; ++j) {
-                sum.x += c_kernel[kernel_mid + j]  * (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y + j].z;
-                sum.y += c_kernel[kernel_mid + j]  * (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y + j].y;
-                sum.z += c_kernel[kernel_mid + j]  * (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y + j].x;
+                sum.x += c_kernel[kernel_mid + j] * (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y + j].x;
+                sum.y += c_kernel[kernel_mid + j] * (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y + j].y;
+                sum.z += c_kernel[kernel_mid + j] * (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y + j].z;
             }
         }
         else {
-            sum.x = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].z;
+            sum.x = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].x;
             sum.y = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].y;
-            sum.z = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].x;
+            sum.z = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].z;
         }
-        if (full == true) {
-            d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].x = sum.x *  g[i * COLUMNS_BLOCKDIM_Y * pitch] + ((float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].z * abs(1 - g[i * COLUMNS_BLOCKDIM_Y * pitch]));
-            d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].y = sum.y * g[i * COLUMNS_BLOCKDIM_Y * pitch] + ((float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].y * abs(1 - g[i * COLUMNS_BLOCKDIM_Y * pitch]));
-            d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].z = sum.z * g[i * COLUMNS_BLOCKDIM_Y * pitch] + ((float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].x * abs(1 - g[i * COLUMNS_BLOCKDIM_Y * pitch]));
+        //if(full == 0) {
+        //NORMAL
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].x = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].x;
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].y = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].y;
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].z = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].z;
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].w = 255;
+        //    
+        //}
+        //else {
+        // FOCUS DEPTH
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].x = sum.x ;
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].y = sum.y ;
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].z = sum.z ;
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].w = 255;
+            
+        //}
+        //case 2: {
+        //BLUR TUNNEL VISION 
+            d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].x = sum.x * abs(1 - g[i * COLUMNS_BLOCKDIM_Y * pitch]) + ((float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].x * g[i * COLUMNS_BLOCKDIM_Y * pitch]);
+            d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].y = sum.y * abs(1 - g[i * COLUMNS_BLOCKDIM_Y * pitch]) + ((float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].y * g[i * COLUMNS_BLOCKDIM_Y * pitch]);
+            d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].z = sum.z * abs(1 - g[i * COLUMNS_BLOCKDIM_Y * pitch]) + ((float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].z * g[i * COLUMNS_BLOCKDIM_Y * pitch]);
             d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].w = 255;
-        }
-        else {
-            d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].x = sum.x * g[i * COLUMNS_BLOCKDIM_Y * pitch];
-            d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].y = sum.y * g[i * COLUMNS_BLOCKDIM_Y * pitch];
-            d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].z = sum.z * g[i * COLUMNS_BLOCKDIM_Y * pitch];
-            d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].w = 255;
-        }
+        //    break;
+        //}
+        //case 3: {
+        //BLACK TUNNEL VISION
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].x = sum.x * g[i * COLUMNS_BLOCKDIM_Y * pitch];
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].y = sum.y * g[i * COLUMNS_BLOCKDIM_Y * pitch];
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].z = sum.z * g[i * COLUMNS_BLOCKDIM_Y * pitch];
+            //d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].w = 255;
+        //    break;
+        //}
+        //default: {
+        //    d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].x = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].x;
+        //    d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].y = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].y;
+        //    d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].z = (float)s_Data[threadIdx.x][threadIdx.y + i * COLUMNS_BLOCKDIM_Y].z;
+        //    d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].w = 255;
+        //    break;
+        //}
+        
     }
 }
 
@@ -315,7 +376,7 @@ __device__ float3 lab2bgr(float3 src) {
     return xyz2bgr(lab2xyz(src));
 }
 
-__global__ void k_contrast(const sl::uchar4* d_Src, sl::uchar4* d_Dst, sl::uchar4* d_Dst2, int imageW, int imageH, int pitch, float p, float* g,int pitchdepth)
+__global__ void k_contrast(const sl::uchar4* d_Src, sl::uchar4* d_Dst, int imageW, int imageH, int pitch, float p, float* g,int pitchdepth)
 {
 
     //Offset to the upper halo edge
@@ -323,7 +384,6 @@ __global__ void k_contrast(const sl::uchar4* d_Src, sl::uchar4* d_Dst, sl::uchar
     const int baseY = (blockIdx.y * COLUMNS_RESULT_STEPS - COLUMNS_HALO_STEPS) * COLUMNS_BLOCKDIM_Y + threadIdx.y;
     d_Src += baseY * pitch + baseX;
     d_Dst += baseY * pitch + baseX;
-    d_Dst2 += baseY * pitch + baseX;
     g += baseY * pitchdepth + baseX;
 
 
@@ -347,24 +407,22 @@ __global__ void k_contrast(const sl::uchar4* d_Src, sl::uchar4* d_Dst, sl::uchar
         transformed.z=lab2bgr(bgr2lab(bgr, p)).z;
 
 
-        d_Dst2[i * COLUMNS_BLOCKDIM_Y * pitch].x = transformed.x;
-        d_Dst2[i * COLUMNS_BLOCKDIM_Y * pitch].y = transformed.y;
-        d_Dst2[i * COLUMNS_BLOCKDIM_Y * pitch].z = transformed.z;
+
         
 
         d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].x = (unsigned char)(transformed.x < 0 ? 0 : (transformed.x > 255 ? 255 : transformed.x));
         d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].y = (unsigned char)(transformed.y < 0 ? 0 : (transformed.y > 255 ? 255 : transformed.y));
         d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].z = (unsigned char)(transformed.z < 0 ? 0 : (transformed.z > 255 ? 255 : transformed.z));
-        d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].w = 0;
+        d_Dst[i * COLUMNS_BLOCKDIM_Y * pitch].w = 255;
     }
 }
 
-void contrast(sl::uchar4 * src, sl::uchar4 * dst, sl::uchar4* dst2, int imageW, int imageH, unsigned int step, float p, float* g, int pitchdepth)
+void contrast(sl::uchar4 * src, sl::uchar4 * dst, int imageW, int imageH, unsigned int step, float p, float* g, int pitchdepth)
 {
     dim3 blocks(imageW / COLUMNS_BLOCKDIM_X, imageH / (COLUMNS_RESULT_STEPS * COLUMNS_BLOCKDIM_Y));
     dim3 threads(COLUMNS_BLOCKDIM_X, COLUMNS_BLOCKDIM_Y);
 
-    k_contrast <<< blocks,threads >>> (src, dst,dst2, imageW, imageH, step, p, g,pitchdepth);
+    k_contrast <<< blocks,threads >>> (src, dst, imageW, imageH, step, p, g,pitchdepth);
     
 
 }

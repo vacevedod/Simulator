@@ -109,8 +109,8 @@ int main(int argc, char** argv) {
     Mat gpu_Image_renderr(new_width, new_height, MAT_TYPE::U8_C4, sl::MEM::GPU);
     Mat gpu_transforml(new_width, new_height, MAT_TYPE::U8_C4, sl::MEM::GPU);
     Mat gpu_transformr(new_width, new_height, MAT_TYPE::U8_C4, sl::MEM::GPU);
-    Mat gpu_transform2l(new_width, new_height, MAT_TYPE::U8_C4, sl::MEM::GPU);
-    Mat gpu_transform2r(new_width, new_height, MAT_TYPE::U8_C4, sl::MEM::GPU);
+    //Mat gpu_transform2l(new_width, new_height, MAT_TYPE::U8_C4, sl::MEM::GPU);
+    //Mat gpu_transform2r(new_width, new_height, MAT_TYPE::U8_C4, sl::MEM::GPU);
     Mat gpu_depthl;
     Mat gpu_depthr;
     Mat gpu_mask;
@@ -121,6 +121,11 @@ int main(int argc, char** argv) {
     Mat gpu_image_convolr;
 
     Mat image32SL;
+
+    //////////////////////////////////////////////////////////////////////// UI DEFINITION /////////////////////////////////////////
+    //values needed for UI
+    int width = 400;
+
 
     //sigma
     float sigmaXl = 1800, sigmaYl = 1800;
@@ -138,12 +143,21 @@ int main(int argc, char** argv) {
 
     cvui::init(WINDOW_NAME);
 
-    bool tunnelVision=false;
+    bool fullLowAcuity = false;
+    bool tVblack = false;
+    bool tVblur=false;
     bool invertMask = false;
+    bool blacktunnel = false;
+    bool bothEyesControl = false;
+    bool sameSigmaXY = false;
+    int tunnelVision = 0;
 
     cv::Mat psf = cv::imread("C:\\Users\\acevedo\\Documents\\Visual Studio 2019\\Varjo\\ZedDepth - Copy\\SpectralPSF2.png", 0);
     psf.convertTo(psf, CV_32F);
 
+
+
+    //////////////////////////////////// MEMORY ALLCATION ZED MATRICES ///////////////////////////////////////////
     
     image32SL.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
     gpu_image_left.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
@@ -152,8 +166,8 @@ int main(int argc, char** argv) {
     gpu_Image_renderr.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
     gpu_transforml.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
     gpu_transformr.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
-    gpu_transform2l.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
-    gpu_transform2r.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
+    //gpu_transform2l.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
+    //gpu_transform2r.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
     gpu_depthl.alloc(camera_resolution_, MAT_TYPE::F32_C1, MEM::GPU);
     gpu_depthr.alloc(camera_resolution_, MAT_TYPE::F32_C1, MEM::GPU);
     gpu_mask.alloc(camera_resolution_, MAT_TYPE::U8_C1, MEM::GPU);
@@ -161,6 +175,9 @@ int main(int argc, char** argv) {
     gpu_depthr_normalized.alloc(camera_resolution_, MAT_TYPE::F32_C1, MEM::GPU);
     gpu_image_convoll.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
     gpu_image_convolr.alloc(camera_resolution_, MAT_TYPE::U8_C4, MEM::GPU);
+
+
+    //////////////////////////////////////// GAUSSIAN KERNEL DEPTH OF FIELD  //////////////////////////////////////////////////////////////
 
     //Calculate gaussian Kernel
     std::vector<float> gauss_vec;
@@ -188,19 +205,20 @@ int main(int argc, char** argv) {
         copyKernel(gauss_vec.data(), i);
     }
 
-    //testKernel();
+
     
-
-
+    //////////////////////////debug ///////////////////////////////////
+        //testKernel();
     int intValue1 = 30;
     uchar ucharValue2 = 30;
     char charValue3 = 30;
     float floatValue1 = 12.;
     double doubleValue1 = 15., doubleValue2 = 10.3, doubleValue3 = 2.25;
-    int width = 400;
-    cv::Mat frame = cv::Mat(cv::Size(450, 650), CV_8UC3);
 
 
+ 
+
+    ///////////////////////////////////////////////////// ZED MATRICES TO OPENCV MATRICES /////////////////////////////////////////////////////////
 
     // To share data between sl::Mat and cv::Mat, use slMat2cvMat()
     // Only the headers and pointer to the sl::Mat are copied, not the data itself
@@ -208,15 +226,14 @@ int main(int argc, char** argv) {
     //cv::Mat image_ocv = slMat2cvMat(image_zed);
 
 
-
     Mat depth_image_zed_gpu(new_width, new_height, MAT_TYPE::U8_C4, sl::MEM::GPU); // alloc sl::Mat to store GPU depth image
     cv::cuda::GpuMat depth_image_ocv_gpu = slMat2cvMatGPU(depth_image_zed_gpu); // create an opencv GPU reference of the sl::Mat
     cv::Mat depth_image_ocv; // cpu opencv mat for display purposes
-    cv::cuda::GpuMat render_gpul = slMat2cvMatGPU(gpu_transform2l); // create an opencv GPU reference of the sl::Mat
-    cv::cuda::GpuMat render_gpur = slMat2cvMatGPU(gpu_transform2r);
+    //cv::cuda::GpuMat render_gpul = slMat2cvMatGPU(gpu_transforml); // create an opencv GPU reference of the sl::Mat
+    //cv::cuda::GpuMat render_gpur = slMat2cvMatGPU(gpu_transformr);
 
-    cv::cuda::GpuMat render_gpu2l = slMat2cvMatGPU(gpu_transforml);
-    cv::cuda::GpuMat render_gpu2r = slMat2cvMatGPU(gpu_transformr);
+    cv::cuda::GpuMat render_gpul = slMat2cvMatGPU(gpu_transforml);
+    cv::cuda::GpuMat render_gpur = slMat2cvMatGPU(gpu_transformr);
 
     Mat slMaskl, slMaskr;
     cv::Mat h_thresholdL;
@@ -230,10 +247,14 @@ int main(int argc, char** argv) {
     cv::cuda::GpuMat testdepth_image_ocv_gpur = slMat2cvMatGPU(slMaskr);
 
 
+
+    sl::Mat depth;
     cv::cuda::GpuMat d_kernel;
-    int trackbarPos, trackbarCon;
+
     int top, bottom, left, right;
     // Loop until 'q' is pressed
+
+    /////////////////////////////////////////////////// CAMERA ACQUISITON ///////////////////////////////////////////
     char key = ' ';
     while (key != 'q') {
 
@@ -242,7 +263,7 @@ int main(int argc, char** argv) {
 
             int x = image_zed.getWidth() / 2;
             int y = image_zed.getHeight() / 2;
-            
+
             ///////////////////////////////////UI DEFINITION /////////////////////////////////////////////////////////
             //BACKGROUND COLOR 
             interUI = cv::Scalar(50, 50, 50);
@@ -256,8 +277,22 @@ int main(int argc, char** argv) {
             cvui::trackbar(width, &p, 1., 0.5, 4);
             cvui::space(5);
 
-            cvui::checkbox("Tunnel Vision", &tunnelVision);
+            cvui::checkbox("Low Visual Acuity", &fullLowAcuity);
             cvui::space(5);
+
+            cvui::checkbox("Tunnel Vision Black", &tVblur);
+            cvui::space(5);
+            if (tVblack) {
+                tVblur = false;
+                tunnelVision = 2;
+            }
+
+            cvui::checkbox("Tunnel Vision Blur", &tVblack);
+            cvui::space(5);
+            if (tVblur) {
+                tVblack = false;
+                tunnelVision = 3;
+            }
 
             cvui::checkbox("Tunnel Vision Mask Invert", &invertMask);
             cvui::space(5);
@@ -270,13 +305,6 @@ int main(int argc, char** argv) {
             cvui::trackbar(width, &kernelRadr, 0, 32);
             cvui::space(5);
 
-            //cvui::text("uchar trackbar, no customization");
-            //cvui::trackbar(width, &ucharValue2, (uchar)0, (uchar)255);
-            //cvui::space(5);
-
-            //cvui::text("signed char trackbar, no customization");
-            //cvui::trackbar(width, &charValue3, (char)-128, (char)127);
-            //cvui::space(5);
 
             cvui::text("Depth of Focus");
             cvui::trackbar(width, &norm_depth_focus_point, 0., 1., 4);
@@ -297,6 +325,15 @@ int main(int argc, char** argv) {
             cvui::text("Sigma Y Right Eye");
             cvui::trackbar(width, &sigmaYr, 0.0001f, 2200.f);
             cvui::space(5);
+
+            //cvui::text("uchar trackbar, no customization");
+            //cvui::trackbar(width, &ucharValue2, (uchar)0, (uchar)255);
+            //cvui::space(5);
+            
+            //cvui::text("signed char trackbar, no customization");
+            //cvui::trackbar(width, &charValue3, (char)-128, (char)127);
+            //cvui::space(5);
+
 
             //cvui::text("double trackbar, label %.1Lf, TRACKBAR_DISCRETE");
             //cvui::trackbar(width, &doubleValue2, 10., 10.5, 1, "%.1Lf", cvui::TRACKBAR_DISCRETE, 0.1);
@@ -334,7 +371,7 @@ int main(int argc, char** argv) {
             cv::Mat_<float> mask_vr, proc_imgr;
             //mask_vr = kernelr;
             normalize(kernelr, mask_vr, 0, 1, cv::NormTypes::NORM_MINMAX);
-
+            
             if(invertMask)
                 mask_vr = abs(mask_vr - 1);
 
@@ -354,21 +391,38 @@ int main(int argc, char** argv) {
             zed.retrieveImage(gpu_image_left, VIEW::LEFT, MEM::GPU);
             zed.retrieveImage(gpu_image_right, VIEW::RIGHT, MEM::GPU);
 
+            zed.retrieveImage(depth_image_zed_gpu, VIEW::DEPTH, MEM::GPU, new_image_size);
+
             zed.retrieveMeasure(gpu_depthl, MEASURE::DEPTH, MEM::GPU);
             zed.retrieveMeasure(gpu_depthr, MEASURE::DEPTH_RIGHT, MEM::GPU);
 
             float max_range = zed.getInitParameters().depth_maximum_distance;
             float min_range = zed.getInitParameters().depth_minimum_distance;
+            
+            imshow("maks", mask_vl);
+            depth_image_ocv_gpu.download(depth_image_ocv);
+
+
+            cv::imshow("Depth", depth_image_ocv);
 
             /////////////////////////////////IMAGE PROCESSION CUDA FUNCTIONS ////////////////////////////////////////////////////////////////////
+            
+
+            
+
             normalizeDepth(gpu_depthl.getPtr<float>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_depthl.getStep(MEM::GPU), min_range, max_range, gpu_depthl.getWidth(), gpu_depthl.getHeight());
             normalizeDepth(gpu_depthr.getPtr<float>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_depthr.getStep(MEM::GPU), min_range, max_range, gpu_depthr.getWidth(), gpu_depthr.getHeight());
 
-            convolutionRows(gpu_image_convoll.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getPtr<sl::uchar4>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_depthl_normalized.getStep(MEM::GPU), norm_depth_focus_point,kernelRadl, tunnelVision, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
-            convolutionRows(gpu_image_convolr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getPtr<sl::uchar4>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_depthr_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadr, tunnelVision, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
+            convolutionRows(gpu_image_convoll.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getPtr<sl::uchar4>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_depthl_normalized.getStep(MEM::GPU), norm_depth_focus_point,kernelRadl, fullLowAcuity, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
+            convolutionRows(gpu_image_convolr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getPtr<sl::uchar4>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_depthr_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadr, fullLowAcuity, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
             
-            convolutionColumns(gpu_Image_renderl.getPtr<sl::uchar4>(MEM::GPU), gpu_image_convoll.getPtr<sl::uchar4>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_depthl_normalized.getStep(MEM::GPU), norm_depth_focus_point,kernelRadl, tunnelVision, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
-            convolutionColumns(gpu_Image_renderr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_convolr.getPtr<sl::uchar4>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_depthr_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadr, tunnelVision, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
+            convolutionColumns(gpu_Image_renderl.getPtr<sl::uchar4>(MEM::GPU), gpu_image_convoll.getPtr<sl::uchar4>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_depthl_normalized.getStep(MEM::GPU), norm_depth_focus_point,kernelRadl, fullLowAcuity, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
+            convolutionColumns(gpu_Image_renderr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_convolr.getPtr<sl::uchar4>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_depthr_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadr, fullLowAcuity, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
+
+          
+
+            contrast(gpu_Image_renderl.getPtr<sl::uchar4>(MEM::GPU), gpu_transforml.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_image_left.getStep(MEM::GPU), p, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
+            contrast(gpu_Image_renderr.getPtr<sl::uchar4>(MEM::GPU), gpu_transformr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_image_right.getStep(MEM::GPU), p, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
 
             
             ////////////////////////////////////////////////////////////DFT////////////////////////////////////////////////////////////////////
@@ -377,7 +431,7 @@ int main(int argc, char** argv) {
             cv::cuda::threshold(d_thresholdL, d_thresholdL, 252, 255, cv::THRESH_TOZERO);
             d_thresholdL.download(h_thresholdL);
             cv::cvtColor(h_thresholdL, h_thresholdL, cv::COLOR_BGRA2GRAY);
-            cv::imshow("wite", h_thresholdL);
+            //cv::imshow("wite", h_thresholdL);
             
             cv::normalize(h_thresholdL, h_thresholdL, 0, 1, cv::NORM_MINMAX);
             
@@ -422,28 +476,25 @@ int main(int argc, char** argv) {
             //
             //normalize(imgout, imgout, 0, 255, cv::NORM_MINMAX);
             
-            cv::imshow("left threshold", img32cv);
+            //cv::imshow("left threshold", img32cv);
             ///////////////////////////////////////////////////////////CONTRAST A TUNNEL VISION////////////////////////////////////////////////////////////////////
-
-            contrast(gpu_Image_renderl.getPtr<sl::uchar4>(MEM::GPU), gpu_transform2l.getPtr<sl::uchar4>(MEM::GPU) , gpu_transforml.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_image_left.getStep(MEM::GPU),p, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
-            contrast(gpu_Image_renderr.getPtr<sl::uchar4>(MEM::GPU), gpu_transform2r.getPtr<sl::uchar4>(MEM::GPU), gpu_transformr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_image_right.getStep(MEM::GPU), p, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
 
             //////////////////////////////////////////////////////DOWNLOAD FOR RENDER //////////////////////////////////////////////////////
             cv::Mat render_ocvl, render_ocvr; // cpu opencv mat for display purposes
             cv::Mat gpumaskdownloadl, gpumaskdownloadr;
             
-            render_gpul.download(render_ocvl);
-            render_gpur.download(render_ocvr);
-            render_gpu2l.download(gpumaskdownloadl);
-            render_gpu2r.download(gpumaskdownloadr);
+            //render_gpul.download(render_ocvl);
+            //render_gpur.download(render_ocvr);
+            render_gpul.download(gpumaskdownloadl);
+            render_gpur.download(gpumaskdownloadr);
 
             //////////////////////////////////////////////CORRECT OPENCV COLORS //////////////////////////////////////////////////////////////////////
 
             //cv::cvtColor(render_ocvl, render_ocvl, cv::COLOR_BGRA2RGBA);
             //cv::cvtColor(render_ocvr, render_ocvr, cv::COLOR_BGRA2RGBA);
 
-            cv::cvtColor(gpumaskdownloadl, gpumaskdownloadl, cv::COLOR_BGRA2RGBA);
-            cv::cvtColor(gpumaskdownloadr, gpumaskdownloadr, cv::COLOR_BGRA2RGBA);
+            //cv::cvtColor(gpumaskdownloadl, gpumaskdownloadl, cv::COLOR_BGRA2RGBA);
+            //cv::cvtColor(gpumaskdownloadr, gpumaskdownloadr, cv::COLOR_BGRA2RGBA);
 
 
            //////////////////////////////////////////////////////DISPLAY  ////////////////////////////////////////////////////////////////////////////////
@@ -474,8 +525,8 @@ int main(int argc, char** argv) {
     gpu_transforml.free();
     gpu_transformr.free();
 
-    gpu_transform2l.free();
-    gpu_transform2r.free();
+    //gpu_transform2l.free();
+    //gpu_transform2r.free();
     zed.close();
     return 0;
 }
@@ -567,3 +618,398 @@ void fftshift(const cv::Mat& input, cv::Mat& output) {
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
