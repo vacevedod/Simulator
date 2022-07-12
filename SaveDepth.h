@@ -452,5 +452,8 @@ void calculateDFT(cv::Mat& src, cv::Mat& dst);
 
 //cv::Mat temporalGlare(cv::Mat zedImg, cv::cuda::GpuMat d_threshold, int lightSensitivity, bool cudaglare, cv::Mat h_dftcc[], cv::Mat_<float> h_dftoc, bool colored);
 
+cv::cuda::GpuMat distortionMaps(cv::cuda::GpuMat view, int fy, int fx, int radius, cv::Mat srcX, cv::Mat srcY, cv::Mat srcX2, cv::Mat srcY2, float distIntens);
+
+cv::Mat distortionMaps(cv::Mat view, int fy, int fx, int radius, float distIntens);
 
 #endif

@@ -32,5 +32,7 @@ void convolutionColumns(sl::uchar4* d_Dst, sl::uchar4* d_Src, float* i_depth, in
 void contrast(sl::uchar4* src, sl::uchar4* dst, int imageW, int imageH, unsigned int step,  float p);
 void colorShift(sl::uchar4* src, sl::uchar4* dst, int imageW, int imageH, unsigned int step, float shiftValue);
 
+void deformationmap(cv::cuda::GpuMat& dstx, cv::cuda::GpuMat& dsty, cv::cuda::GpuMat& dstx2, cv::cuda::GpuMat& dsty2, int radius, double distIntens, int fx, int fy);
+
 
 #endif //DOF_GPU_H

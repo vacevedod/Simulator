@@ -37,6 +37,7 @@ sl::Mat cvMat2slMat(const cv::Mat& input);
 cv::cuda::GpuMat slMat2cvMatGPU(Mat& input);
 void calculateDFT(cv::Mat& src, cv::Mat& dst);
 void fftshift(const cv::Mat& input, cv::Mat& output);
+int diopterToGaussRadius(double D);
 
 
 void printHelp();
@@ -59,7 +60,7 @@ int main(int argc, char** argv) {
     init_params.depth_mode = DEPTH_MODE::NEURAL;
     init_params.coordinate_units = UNIT::MILLIMETER;
     init_params.depth_minimum_distance = 40.0f;
-    init_params.depth_maximum_distance = 2000.0f;
+    init_params.depth_maximum_distance = 8000.0f;
     init_params.enable_right_side_measure = true;
 
 
@@ -123,11 +124,12 @@ int main(int argc, char** argv) {
 
     //contrast
     double p = 1;
+    double yellow = 1;
 
     //light sensitivity
     int lightSensitivity = 252;
     
-    cv::Mat interUI(1200,500,CV_8UC3);
+    cv::Mat interUI(1500,500,CV_8UC3);
 
     cv::namedWindow("ImageLeft"); // Create Window
     cv::namedWindow("ImageRight"); // Create Window
@@ -146,7 +148,7 @@ int main(int argc, char** argv) {
     bool temporalglare = false;
     int tunnelVision = 0;
 
-    int fx = 1000, fy=100;
+    int fx = 934, fy=484;
 
 
     //////////////////////////////////////////////////GLARE INITIALIZATION//////////////////////////////////////////////////
@@ -202,6 +204,7 @@ int main(int argc, char** argv) {
     dst2= RGB4Lambda(samples, mag_img,dst2, colored);
 
     cv::resize(dst2, dst2, cv::Size(512, 512), cv::INTER_NEAREST);
+    cv::imshow("bright", dst2);
     cv::cvtColor(dst2, dstgray, cv::COLOR_BGRA2GRAY);
 
     cv::Mat_<float> colorChannels[3];
@@ -259,9 +262,14 @@ int main(int argc, char** argv) {
     //////////////////////////////////////// GAUSSIAN KERNEL DEPTH OF FIELD  //////////////////////////////////////////////////////////////
 
     //Calculate gaussian Kernel
-    
-    int kernelRadl = 32;
-    int kernelRadr = 32;
+    double D = 0;
+    //max kernelrad 32, max D is 3.8
+    int kernelRadl =32;
+    int kernelRadr =32;
+    //distortion radius
+    int radius = 200;
+
+    double distIntens = 0.2;
 
     // Create all the gaussien kernel for different radius and copy them to GPU
     createKernel(kernelRadl);
@@ -285,7 +293,13 @@ int main(int argc, char** argv) {
 
     Mat depth_image_zed_gpu(new_width, new_height, MAT_TYPE::U8_C4, sl::MEM::GPU); // alloc sl::Mat to store GPU depth image
     cv::cuda::GpuMat depth_image_ocv_gpu = slMat2cvMatGPU(depth_image_zed_gpu); // create an opencv GPU reference of the sl::Mat
+
+    Mat depth_image_zed_gpu_r(new_width, new_height, MAT_TYPE::U8_C4, sl::MEM::GPU); // alloc sl::Mat to store GPU depth image
+    cv::cuda::GpuMat depth_image_ocv_gpu_r = slMat2cvMatGPU(depth_image_zed_gpu_r); // create an opencv GPU reference of the sl::Mat
+
+
     cv::Mat depth_image_ocv; // cpu opencv mat for display purposes
+    cv::Mat depth_image_ocv_r;
     //cv::cuda::GpuMat render_gpul = slMat2cvMatGPU(gpu_transforml); // create an opencv GPU reference of the sl::Mat
     //cv::cuda::GpuMat render_gpur = slMat2cvMatGPU(gpu_transformr);
 
@@ -352,6 +366,10 @@ int main(int argc, char** argv) {
             cvui::text("Contrast");
             cvui::trackbar(width, &p, 1., 0.5, 4);
             cvui::space(5);
+
+            cvui::text("Yellowing");
+            cvui::trackbar(width, &yellow, 1., 0.5, 4);
+            cvui::space(5);
             
             cvui::checkbox("Tunnel Vision Mask Invert", &invertMask);
             cvui::space(5);
@@ -363,14 +381,22 @@ int main(int argc, char** argv) {
             cvui::space(5);
             (!colored) ? glarechannels = 3 : glarechannels = 1;
 
-            cvui::text("Kernel Radius");
-            cvui::trackbar(width, &kernelRadl, 0, 32);
+            //cvui::text("Kernel Radius Left");
+            //cvui::trackbar(width, &kernelRadl, 0, 32);
+            //cvui::space(5);
+            //
+            //cvui::text("Kernel Radius Right");
+            //cvui::trackbar(width, &kernelRadr, 0, 32);
+            //cvui::space(5);
+
+            cvui::text("Distortion Radius");
+            cvui::trackbar(width, &radius, 0, 1000);
             cvui::space(5);
 
-            cvui::text("Kernel Redius");
-            cvui::trackbar(width, &kernelRadr, 0, 32);
+            cvui::text("Distortion Intensity");
+            cvui::trackbar(width, &distIntens, -0.2, 0.2, 50);
             cvui::space(5);
-
+\
             cvui::text("General Light Sensitivity");
             cvui::trackbar(width, &lightSensitivity, 0, 255);
             cvui::space(5);
@@ -378,6 +404,12 @@ int main(int argc, char** argv) {
             cvui::text("Depth of Focus");
             cvui::trackbar(width, &norm_depth_focus_point, 0., 1., 4);
             cvui::space(5);
+
+            cvui::text("Diopters");
+            cvui::trackbar(width, &D, 0.0, 3.8, 4);
+            cvui::space(5);
+            kernelRadl = diopterToGaussRadius(D);
+            kernelRadr = diopterToGaussRadius(D);
 
             cvui::text("Sigma X Left Eye");
             cvui::trackbar(width, &sigmaXl, 0.0001f, 2200.f);
@@ -439,8 +471,16 @@ int main(int argc, char** argv) {
             cv::Mat_<float> mask_vl, proc_imgl;
             normalize(subImgl, mask_vl, 0, 1, cv::NormTypes::NORM_MINMAX);
             
-            if (invertMask)
+            if (invertMask){
                 mask_vl = abs(mask_vl - 1);
+                for (int i = 0; i < mask_vl.rows; i++) {
+                    for (int j = 0; j < mask_vl.cols; j++) {
+                        (mask_vl.at<float>(i, j) < norm_depth_focus_point) ? mask_vl.at<float>(i, j) = 0: mask_vl.at<float>(i, j) = mask_vl.at<float>(i, j) ;
+                    }
+                }
+            }
+            //std::cout << mask_vl;
+            //cv::imshow("massk", mask_vl);
 
             //RIGHT
             cv::Mat kernel_Xr = cv::getGaussianKernel(2*new_width, sigmaXr);
@@ -472,6 +512,7 @@ int main(int argc, char** argv) {
             zed.retrieveImage(gpu_image_right, VIEW::RIGHT, MEM::GPU);
 
             zed.retrieveImage(depth_image_zed_gpu, VIEW::DEPTH, MEM::GPU, new_image_size);
+            zed.retrieveImage(depth_image_zed_gpu_r, VIEW::DEPTH_RIGHT, MEM::GPU, new_image_size);
 
             zed.retrieveMeasure(gpu_depthl, MEASURE::DEPTH, MEM::GPU);
             zed.retrieveMeasure(gpu_depthr, MEASURE::DEPTH_RIGHT, MEM::GPU);
@@ -479,12 +520,13 @@ int main(int argc, char** argv) {
             float max_range = zed.getInitParameters().depth_maximum_distance;
             float min_range = zed.getInitParameters().depth_minimum_distance;
             
-            //imshow("maks", mask_vl);
-            depth_image_ocv_gpu.download(depth_image_ocv);
-
-
+           
+            // display depth left and right
+            //depth_image_ocv_gpu.download(depth_image_ocv);
+            //depth_image_ocv_gpu_r.download(depth_image_ocv_r);
             //cv::imshow("Depth", depth_image_ocv);
-
+            //cv::imshow("Depth R", depth_image_ocv_r);
+            
 
             ////////////////////////////////////////////////////////////DFT////////////////////////////////////////////////////////////////////
 
@@ -492,15 +534,37 @@ int main(int argc, char** argv) {
             gpu_image_right.copyTo(image32SR, sl::COPY_TYPE::GPU_GPU);
             img32l.download(img32cv);
             img32r.download(img32cvr);
-            
+           
             //check exception in memory location h_dftcc
             cv::Mat h_tempdftcc[3] ;
             h_tempdftcc[0] = h_dftcc[0];
             h_tempdftcc[1] = h_dftcc[1];
             h_tempdftcc[2] = h_dftcc[2];
+            
+            
+            //cv::Rect roi2(new_width - fx, new_height - fy, new_width, new_height);
+            cv::Mat srcX2(d_thresholdL.rows, d_thresholdL.cols, CV_32F);
+            cv::Mat srcY2(d_thresholdL.rows, d_thresholdL.cols, CV_32F);
+            cv::Mat srcX(d_thresholdL.rows, d_thresholdL.cols, CV_32F);
+            cv::Mat srcY(d_thresholdL.rows, d_thresholdL.cols, CV_32F);
+     
+            
+            //cv::cuda::GpuMat afteramdl = distortionMaps(d_thresholdL, fy, fx, radius, srcX, srcY, srcX2, srcY2, distIntens);
+            //cv::cuda::GpuMat afteramdr = distortionMaps(d_thresholdR, fy, fx, radius, srcX, srcY, srcX2, srcY2, distIntens);
+            
+            //afteramdl.copyTo(d_thresholdL);
+            //afteramdr.copyTo(d_thresholdR);
 
+            //d_thresholdL.download(img32cv);
+            //d_thresholdR.download(img32cvr);
 
-            //temporalGlare(img32cv, d_thresholdL, lightSensitivity, cudaglare, h_tempdftcc, h_dftoc, colored);
+            //cpu implementation of distortion 
+            //cv::Mat afteramdl, afteramdr;
+            //
+            //afteramdl = distortionMaps(img32cv, fy, fx, radius,  distIntens);
+            //afteramdr = distortionMaps(img32cvr, fy, fx, radius, distIntens);
+            //img32cv=afteramdl;
+            //img32cvr=afteramdr;
             
             if (temporalglare) {
                 cv::Mat reschannel[4];
@@ -564,7 +628,7 @@ int main(int argc, char** argv) {
                     tmp3.download(h_thresholdL);
                     tmp3r.download(h_thresholdR);
 
-
+                    
             
                     h_thresholdL.convertTo(h_thresholdL, CV_32F);
                     resize(h_thresholdL, h_thresholdL, h_dftcc[1].size(), cv::INTER_NEAREST);
@@ -573,7 +637,7 @@ int main(int argc, char** argv) {
                     h_thresholdR.convertTo(h_thresholdR, CV_32F);
                     resize(h_thresholdR, h_thresholdR, h_dftcc[1].size(), cv::INTER_NEAREST);
                     calculateDFT(h_thresholdR, h_DFT_imgr);
-            
+                    
             
                     //cv::imshow("temp", h_thresholdR);
                     if (colored) {
@@ -607,10 +671,10 @@ int main(int argc, char** argv) {
             
                     reschannel[3] = 255;
                     reschannelr[3] = 255;
-
+                    
                     std::vector<cv::Mat> RESchannels{ reschannel[0], reschannel[1], reschannel[2], reschannel[3] };
                     std::vector<cv::Mat> RESchannelsr{ reschannelr[0], reschannelr[1], reschannelr[2], reschannelr[3] };
-
+                    
                     merge(RESchannels, img32cv);
                     merge(RESchannelsr, img32cvr);
 
@@ -631,8 +695,9 @@ int main(int argc, char** argv) {
             normalizeDepth(gpu_depthl.getPtr<float>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_depthl.getStep(MEM::GPU), min_range, max_range, gpu_depthl.getWidth(), gpu_depthl.getHeight());
             normalizeDepth(gpu_depthr.getPtr<float>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_depthr.getStep(MEM::GPU), min_range, max_range, gpu_depthr.getWidth(), gpu_depthr.getHeight());
 
-            colorShift(initialleft.getPtr<sl::uchar4>(MEM::GPU), dst1l.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_image_left.getStep(MEM::GPU), p);
-            colorShift(initialright.getPtr<sl::uchar4>(MEM::GPU), dst1r.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_image_right.getStep(MEM::GPU), p);
+
+            colorShift(initialleft.getPtr<sl::uchar4>(MEM::GPU), dst1l.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_image_left.getStep(MEM::GPU), yellow);
+            colorShift(initialright.getPtr<sl::uchar4>(MEM::GPU), dst1r.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_image_right.getStep(MEM::GPU), yellow);
 
             contrast(dst1l.getPtr<sl::uchar4>(MEM::GPU), gpu_transforml.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_image_left.getStep(MEM::GPU), p);
             contrast(dst1r.getPtr<sl::uchar4>(MEM::GPU), gpu_transformr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_image_right.getStep(MEM::GPU), p);
@@ -759,8 +824,17 @@ void printHelp() {
     std::cout << " Press 'n' to switch Depth format" << std::endl;
 }
 
+int diopterToGaussRadius(double D) {
+    //float D = 3.8;
+    //b is blur disk in degrees of visual angle
+    float pupilDiameter = 3.34;
+    float b = 0.057 * (pupilDiameter)*D;
+    
+    //specific for dell u4919dw
+    float degreeToPixel = b * 100 / 2.23;
+    return (int)degreeToPixel;
 
-
+}
 
 
 

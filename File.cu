@@ -433,8 +433,6 @@ __global__ void k_colorShift(const sl::uchar4* d_Src, sl::uchar4* d_Dst, int ima
     d_Src += baseY * pitch + baseX;
     d_Dst += baseY * pitch + baseX;
 
-
-
 #pragma unroll
     for (int i = COLUMNS_HALO_STEPS; i < COLUMNS_HALO_STEPS + COLUMNS_RESULT_STEPS; ++i) {
 
@@ -444,7 +442,7 @@ __global__ void k_colorShift(const sl::uchar4* d_Src, sl::uchar4* d_Dst, int ima
         float3 transformed2;
         float gauss;
 
-        bgr.x = d_Src[i * COLUMNS_BLOCKDIM_Y * pitch].x * shiftValue + (0.177084 * 255)*(1-shiftValue);
+        bgr.x = d_Src[i * COLUMNS_BLOCKDIM_Y * pitch].x * shiftValue + (0.177084 * 255)*(1 - shiftValue);
         bgr.y = d_Src[i * COLUMNS_BLOCKDIM_Y * pitch].y * shiftValue + (0.718461*255) * (1 - shiftValue);
         bgr.z = d_Src[i * COLUMNS_BLOCKDIM_Y * pitch].z * shiftValue + (255) * (1 - shiftValue);
 
@@ -473,6 +471,27 @@ void colorShift(sl::uchar4* src, sl::uchar4* dst, int imageW, int imageH, unsign
     dim3 threads(COLUMNS_BLOCKDIM_X, COLUMNS_BLOCKDIM_Y);
 
     k_colorShift << < blocks, threads >> > (src, dst, imageW, imageH, step, shiftValue);
+
+
+}
+
+__global__ void k_deformationmap( cv::cuda::PtrStep<float> dstx, cv::cuda::PtrStep<float> dsty,cv::cuda::PtrStep<float> dstx2, cv::cuda::PtrStep<float> dsty2, int imageW, int imageH, int radius, double distIntens, int fx, int fy) {
+    float distortionx, distortiony;
+
+    const int dst_x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int dst_y = blockDim.y * blockIdx.y + threadIdx.y;
+
+
+
+
+}
+
+void deformationmap(cv::cuda::GpuMat& dstx, cv::cuda::GpuMat& dsty, cv::cuda::GpuMat& dstx2, cv::cuda::GpuMat& dsty2, int radius, double distIntens, int fx, int fy)
+{
+    const dim3 block(32, 32);
+    const dim3 grid(divUp(dstx.cols, block.x), divUp(dstx.rows, block.y));
+
+    k_deformationmap << < grid, block >> > ( dstx, dsty, dstx2, dsty2, dstx.rows, dstx.cols, radius, distIntens, fx, fy);
 
 
 }

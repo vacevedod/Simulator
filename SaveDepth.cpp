@@ -505,4 +505,100 @@ cv::Mat temporalGlare(cv::Mat zedImg, cv::cuda::GpuMat d_threshold, int lightSen
             cv::imshow("Glare draft", zedImg);
         //}
         return zedImg;
-}*/
+}
+*/
+cv::cuda::GpuMat distortionMaps(cv::cuda::GpuMat view, int fy, int fx, int radius, cv::Mat srcX, cv::Mat srcY, cv::Mat srcX2, cv::Mat srcY2, float distIntens) {
+    float distortionx=0;
+    float distortiony=0;
+    cv::cuda::GpuMat res1;
+    cv::cuda::GpuMat res2;
+    
+
+    #pragma omp parallel for 
+    for (int i = 0; i < view.rows; ++i) {
+        for (int j = 0; j < view.cols; j++) {
+            auto dx = i - fy;
+            auto dy = j - fx;
+
+
+            auto dis = dx * dx + dy * dy;
+            if (dis >= radius * radius) {
+                srcX.at<float>(i, j) = (j);
+                srcY.at<float>(i, j) = (i);
+                srcX2.at<float>(i, j) = j;
+                srcY2.at<float>(i, j) = i;
+            }
+            else {
+                double factor = 1.0;
+                if (dis > 0.0) {
+                    factor = pow(sin(3.141592 * sqrtf(dis) / radius / 2.), distIntens);
+                    distortionx = ((distIntens * 10) * sqrtf(dis) / radius) * sin(i / 15.0);
+                    distortiony = ((distIntens * 10) * sqrtf(dis) / radius) * cos(j / 15.0);
+                }
+                srcX.at<float>(i, j) = static_cast<float>(factor * dy / 1.0 + fx);
+                srcY.at<float>(i, j) = static_cast<float>(factor * dx / 1.0 + fy);
+                srcX2.at<float>(i, j) = j + distortionx;
+                srcY2.at<float>(i, j) = i + distortiony;
+            }
+
+        }
+    }
+    cv::cuda::GpuMat d_srcx, d_srcy;
+    d_srcx.upload(srcX);
+    d_srcy.upload(srcY);
+    
+    cv::cuda::GpuMat d_srcx2, d_srcy2;
+    d_srcx2.upload(srcX2);
+    d_srcy2.upload(srcY2);
+    //
+    cv::cuda::remap(view, res1, d_srcx, d_srcy, cv::INTER_NEAREST, cv::BORDER_REPLICATE);
+    cv::cuda::remap(res1, res2, d_srcx2, d_srcy2, cv::INTER_NEAREST, cv::BORDER_REPLICATE);
+    return res2;
+}
+
+cv::Mat distortionMaps(cv::Mat view, int fy, int fx, int radius, float distIntens) {
+    float distortionx = 0;
+    float distortiony = 0;
+    cv::Mat res1;
+    cv::Mat res2;
+
+    cv::Mat srcY2(view.rows, view.cols, CV_32F);
+    cv::Mat srcX2(view.rows, view.cols, CV_32F);
+    cv::Mat srcX(view.rows,  view.cols, CV_32F);
+    cv::Mat srcY(view.rows,  view.cols, CV_32F);
+
+
+#pragma omp parallel for 
+    for (int i = 0; i < view.rows; ++i) {
+        for (int j = 0; j < view.cols; j++) {
+            auto dx = i - fy;
+            auto dy = j - fx;
+
+
+            auto dis = dx * dx + dy * dy;
+            if (dis >= radius * radius) {
+                srcX.at<float>(i, j) = (j);
+                srcY.at<float>(i, j) = (i);
+                srcX2.at<float>(i, j) = j;
+                srcY2.at<float>(i, j) = i;
+            }
+            else {
+                double factor = 1.0;
+                if (dis > 0.0) {
+                    factor = pow(sin(3.141592 * sqrtf(dis) / radius / 2.), distIntens);
+                    distortionx = ((distIntens * 10) * sqrtf(dis) / radius) * sin(i / 15.0);
+                    distortiony = ((distIntens * 10) * sqrtf(dis) / radius) * cos(j / 15.0);
+                }
+                srcX.at<float>(i, j) = static_cast<float>(factor * dy / 1.0 + fx);
+                srcY.at<float>(i, j) = static_cast<float>(factor * dx / 1.0 + fy);
+                srcX2.at<float>(i, j) = j + distortionx;
+                srcY2.at<float>(i, j) = i + distortiony;
+            }
+
+        }
+    }
+    cv::remap(view, res1, srcX, srcY, cv::INTER_NEAREST, cv::BORDER_REPLICATE);
+    cv::remap(res1, res2, srcX2, srcY2, cv::INTER_NEAREST, cv::BORDER_REPLICATE);
+
+    return res2;
+}
