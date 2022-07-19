@@ -19,6 +19,7 @@
 #include "SaveDepth.h"
 #include "dof_gpu.h"
 
+#include <chrono>
 
 
 
@@ -83,6 +84,8 @@ int main(int argc, char** argv) {
 
     // Prepare new image size to retrieve half-resolution images
     Resolution image_size = zed.getCameraInformation().camera_configuration.resolution;
+
+
     int new_width = image_size.width ;
     int new_height = image_size.height ;
 
@@ -327,16 +330,17 @@ int main(int argc, char** argv) {
 
     int top, bottom, left, right;
     // Loop until 'q' is pressed
-
+    int iter = 0;
     /////////////////////////////////////////////////// CAMERA ACQUISITON ///////////////////////////////////////////
     char key = ' ';
     while (key != 'q') {
 
 
         if (zed.grab(runtime_parameters) == ERROR_CODE::SUCCESS) {
-
+            auto begin = std::chrono::high_resolution_clock::now();
             int x = image_zed.getWidth() / 2;
             int y = image_zed.getHeight() / 2;
+
 
             ///////////////////////////////////UI DEFINITION /////////////////////////////////////////////////////////
             //BACKGROUND COLOR 
@@ -549,14 +553,14 @@ int main(int argc, char** argv) {
             cv::Mat srcY(d_thresholdL.rows, d_thresholdL.cols, CV_32F);
      
             
-            //cv::cuda::GpuMat afteramdl = distortionMaps(d_thresholdL, fy, fx, radius, srcX, srcY, srcX2, srcY2, distIntens);
-            //cv::cuda::GpuMat afteramdr = distortionMaps(d_thresholdR, fy, fx, radius, srcX, srcY, srcX2, srcY2, distIntens);
+            cv::cuda::GpuMat afteramdl = distortionMaps(d_thresholdL, fy, fx, radius, srcX, srcY, srcX2, srcY2, distIntens);
+            cv::cuda::GpuMat afteramdr = distortionMaps(d_thresholdR, fy, fx, radius, srcX, srcY, srcX2, srcY2, distIntens);
             
-            //afteramdl.copyTo(d_thresholdL);
-            //afteramdr.copyTo(d_thresholdR);
+            afteramdl.copyTo(d_thresholdL);
+            afteramdr.copyTo(d_thresholdR);
 
-            //d_thresholdL.download(img32cv);
-            //d_thresholdR.download(img32cvr);
+            d_thresholdL.download(img32cv);
+            d_thresholdR.download(img32cvr);
 
             //cpu implementation of distortion 
             //cv::Mat afteramdl, afteramdr;
@@ -692,6 +696,7 @@ int main(int argc, char** argv) {
             cvMatGPU2slMat(d_thresholdR).copyTo(initialright, sl::COPY_TYPE::GPU_GPU);
 
 
+
             normalizeDepth(gpu_depthl.getPtr<float>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_depthl.getStep(MEM::GPU), min_range, max_range, gpu_depthl.getWidth(), gpu_depthl.getHeight());
             normalizeDepth(gpu_depthr.getPtr<float>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_depthr.getStep(MEM::GPU), min_range, max_range, gpu_depthr.getWidth(), gpu_depthr.getHeight());
 
@@ -709,6 +714,12 @@ int main(int argc, char** argv) {
             convolutionColumns(gpu_Image_renderl.getPtr<sl::uchar4>(MEM::GPU), gpu_image_convoll.getPtr<sl::uchar4>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_depthl_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadl, tunnelVision, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
             convolutionColumns(gpu_Image_renderr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_convolr.getPtr<sl::uchar4>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_depthr_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadr, tunnelVision, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
 
+
+            
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> diff = end - begin;
+            std::cout << "Total time:" << diff.count() << std::endl;
+                    
 
 
             //////////////////////////////////////////////////////DOWNLOAD FOR RENDER //////////////////////////////////////////////////////

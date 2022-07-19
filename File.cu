@@ -442,8 +442,8 @@ __global__ void k_colorShift(const sl::uchar4* d_Src, sl::uchar4* d_Dst, int ima
         float3 transformed2;
         float gauss;
 
-        bgr.x = d_Src[i * COLUMNS_BLOCKDIM_Y * pitch].x * shiftValue + (0.177084 * 255)*(1 - shiftValue);
-        bgr.y = d_Src[i * COLUMNS_BLOCKDIM_Y * pitch].y * shiftValue + (0.718461*255) * (1 - shiftValue);
+        bgr.x = d_Src[i * COLUMNS_BLOCKDIM_Y * pitch].x * shiftValue + (0)*(1 - shiftValue);
+        bgr.y = d_Src[i * COLUMNS_BLOCKDIM_Y * pitch].y * shiftValue + (186) * (1 - shiftValue);
         bgr.z = d_Src[i * COLUMNS_BLOCKDIM_Y * pitch].z * shiftValue + (255) * (1 - shiftValue);
 
 
