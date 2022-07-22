@@ -507,7 +507,7 @@ cv::Mat temporalGlare(cv::Mat zedImg, cv::cuda::GpuMat d_threshold, int lightSen
         return zedImg;
 }
 */
-cv::cuda::GpuMat distortionMaps(cv::cuda::GpuMat view, int fy, int fx, int radius, cv::Mat srcX, cv::Mat srcY, cv::Mat srcX2, cv::Mat srcY2, float distIntens) {
+cv::cuda::GpuMat distortionMapsgpu(cv::cuda::GpuMat view, int fy, int fx, int radius, cv::Mat srcX, cv::Mat srcY, cv::Mat srcX2, cv::Mat srcY2, float distIntens) {
     float distortionx=0;
     float distortiony=0;
     cv::cuda::GpuMat res1;
@@ -599,6 +599,6 @@ cv::Mat distortionMaps(cv::Mat view, int fy, int fx, int radius, float distInten
     }
     cv::remap(view, res1, srcX, srcY, cv::INTER_NEAREST, cv::BORDER_REPLICATE);
     cv::remap(res1, res2, srcX2, srcY2, cv::INTER_NEAREST, cv::BORDER_REPLICATE);
-
+    //cv::imshow("temp", res2);
     return res2;
 }

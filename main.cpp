@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
     init_params.depth_maximum_distance = 8000.0f;
     init_params.enable_right_side_measure = true;
 
-
+    std::cout << init_params.camera_resolution<<std::endl;
 
     // Open the camera
     ERROR_CODE err = zed.open(init_params);
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
     bool blacktunnel = false;
     bool bothEyesControl = false;
     bool sameSigmaXY = false;
-    bool temporalglare = false;
+    bool temporalglare,gaussian, gaussian2,shifting,contrastloss,distortion, cpudistortion = false;
     int tunnelVision = 0;
 
     int fx = 934, fy=484;
@@ -335,9 +335,11 @@ int main(int argc, char** argv) {
     char key = ' ';
     while (key != 'q') {
 
+        
+
 
         if (zed.grab(runtime_parameters) == ERROR_CODE::SUCCESS) {
-            auto begin = std::chrono::high_resolution_clock::now();
+            
             int x = image_zed.getWidth() / 2;
             int y = image_zed.getHeight() / 2;
 
@@ -376,6 +378,24 @@ int main(int argc, char** argv) {
             cvui::space(5);
             
             cvui::checkbox("Tunnel Vision Mask Invert", &invertMask);
+            cvui::space(5);
+
+            cvui::checkbox("Distortion", &distortion);
+            cvui::space(5);
+
+            cvui::checkbox("CPU Distortion", &cpudistortion);
+            cvui::space(5);
+
+            cvui::checkbox("Gaussian Blur", &gaussian);
+            cvui::space(5);
+
+            cvui::checkbox("Gaussian Blur 2", &gaussian2);
+            cvui::space(5);
+
+            cvui::checkbox("Color shifting", &shifting);
+            cvui::space(5);
+
+            cvui::checkbox("Contrast", &contrastloss);
             cvui::space(5);
 
             cvui::checkbox("Temporal Glare", &temporalglare);
@@ -463,7 +483,7 @@ int main(int argc, char** argv) {
 
 
             /////////////////////////////////DYNAMIC GAUSSIAN GENERATION ////////////////////////////////////////////////////
-            
+         
             //LEFT
             cv::Rect roi(new_width - fx, new_height - fy, new_width, new_height);
             cv::Mat kernel_Xl = cv::getGaussianKernel(2*new_width, sigmaXl);
@@ -509,14 +529,14 @@ int main(int argc, char** argv) {
             cvMatGPU2slMat(d_maskr).copyTo(slMaskr, sl::COPY_TYPE::GPU_GPU);
 
 
-
+           
             //////////////////////////////////////////////////RETRIEVE IMAGE AND DEPTH /////////////////////////////////////////////////////////////
 
             zed.retrieveImage(gpu_image_left, VIEW::LEFT, MEM::GPU);
             zed.retrieveImage(gpu_image_right, VIEW::RIGHT, MEM::GPU);
 
-            zed.retrieveImage(depth_image_zed_gpu, VIEW::DEPTH, MEM::GPU, new_image_size);
-            zed.retrieveImage(depth_image_zed_gpu_r, VIEW::DEPTH_RIGHT, MEM::GPU, new_image_size);
+            //zed.retrieveImage(depth_image_zed_gpu, VIEW::DEPTH, MEM::GPU, new_image_size);
+            //zed.retrieveImage(depth_image_zed_gpu_r, VIEW::DEPTH_RIGHT, MEM::GPU, new_image_size);
 
             zed.retrieveMeasure(gpu_depthl, MEASURE::DEPTH, MEM::GPU);
             zed.retrieveMeasure(gpu_depthr, MEASURE::DEPTH_RIGHT, MEM::GPU);
@@ -547,29 +567,36 @@ int main(int argc, char** argv) {
             
             
             //cv::Rect roi2(new_width - fx, new_height - fy, new_width, new_height);
+            
+            auto begin = std::chrono::high_resolution_clock::now();
+            if(distortion){
             cv::Mat srcX2(d_thresholdL.rows, d_thresholdL.cols, CV_32F);
             cv::Mat srcY2(d_thresholdL.rows, d_thresholdL.cols, CV_32F);
             cv::Mat srcX(d_thresholdL.rows, d_thresholdL.cols, CV_32F);
             cv::Mat srcY(d_thresholdL.rows, d_thresholdL.cols, CV_32F);
-     
-            
-            cv::cuda::GpuMat afteramdl = distortionMaps(d_thresholdL, fy, fx, radius, srcX, srcY, srcX2, srcY2, distIntens);
-            cv::cuda::GpuMat afteramdr = distortionMaps(d_thresholdR, fy, fx, radius, srcX, srcY, srcX2, srcY2, distIntens);
+            cv::cuda::GpuMat afteramdl = distortionMapsgpu(d_thresholdL, fy, fx, radius, srcX, srcY, srcX2, srcY2, distIntens);
+            cv::cuda::GpuMat afteramdr = distortionMapsgpu(d_thresholdR, fy, fx, radius, srcX, srcY, srcX2, srcY2, distIntens);
             
             afteramdl.copyTo(d_thresholdL);
             afteramdr.copyTo(d_thresholdR);
-
+            }
             d_thresholdL.download(img32cv);
             d_thresholdR.download(img32cvr);
-
+            //cv::imshow("temp", img32cvr);
             //cpu implementation of distortion 
-            //cv::Mat afteramdl, afteramdr;
-            //
-            //afteramdl = distortionMaps(img32cv, fy, fx, radius,  distIntens);
-            //afteramdr = distortionMaps(img32cvr, fy, fx, radius, distIntens);
-            //img32cv=afteramdl;
-            //img32cvr=afteramdr;
-            
+            if(cpudistortion&&!distortion){
+            cv::Mat cpuafteramdl, cpuafteramdr;
+
+            cpuafteramdl = distortionMaps(img32cv, fy, fx, radius,  distIntens);
+            cpuafteramdr = distortionMaps(img32cvr, fy, fx, radius, distIntens);
+            cv::imshow("temp", cpuafteramdl);
+            cpuafteramdl.copyTo(img32cv);
+            cpuafteramdr.copyTo(img32cvr);
+
+            //img32cv=cpuafteramdl;
+            //img32cvr=cpuafteramdr;
+            }
+
             if (temporalglare) {
                 cv::Mat reschannel[4];
                 cv::split(img32cv, reschannel);
@@ -682,8 +709,7 @@ int main(int argc, char** argv) {
                     merge(RESchannels, img32cv);
                     merge(RESchannelsr, img32cvr);
 
-                    d_thresholdL.upload(img32cv);
-                    d_thresholdR.upload(img32cvr);
+                    
 
                 }
             }
@@ -691,43 +717,75 @@ int main(int argc, char** argv) {
             /////////////////////////////////IMAGE PROCESSION CUDA FUNCTIONS ////////////////////////////////////////////////////////////////////
 
 
-            
+            d_thresholdL.upload(img32cv);
+            d_thresholdR.upload(img32cvr);
             cvMatGPU2slMat(d_thresholdL).copyTo(initialleft, sl::COPY_TYPE::GPU_GPU);
             cvMatGPU2slMat(d_thresholdR).copyTo(initialright, sl::COPY_TYPE::GPU_GPU);
 
 
-
             normalizeDepth(gpu_depthl.getPtr<float>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_depthl.getStep(MEM::GPU), min_range, max_range, gpu_depthl.getWidth(), gpu_depthl.getHeight());
             normalizeDepth(gpu_depthr.getPtr<float>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_depthr.getStep(MEM::GPU), min_range, max_range, gpu_depthr.getWidth(), gpu_depthr.getHeight());
-
-
-            colorShift(initialleft.getPtr<sl::uchar4>(MEM::GPU), dst1l.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_image_left.getStep(MEM::GPU), yellow);
-            colorShift(initialright.getPtr<sl::uchar4>(MEM::GPU), dst1r.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_image_right.getStep(MEM::GPU), yellow);
-
-            contrast(dst1l.getPtr<sl::uchar4>(MEM::GPU), gpu_transforml.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_image_left.getStep(MEM::GPU), p);
-            contrast(dst1r.getPtr<sl::uchar4>(MEM::GPU), gpu_transformr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_image_right.getStep(MEM::GPU), p);
-
-
-            convolutionRows(gpu_image_convoll.getPtr<sl::uchar4>(MEM::GPU), gpu_transforml.getPtr<sl::uchar4>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_depthl_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadl, tunnelVision, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
-            convolutionRows(gpu_image_convolr.getPtr<sl::uchar4>(MEM::GPU), gpu_transformr.getPtr<sl::uchar4>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_depthr_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadr, tunnelVision, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
-
-            convolutionColumns(gpu_Image_renderl.getPtr<sl::uchar4>(MEM::GPU), gpu_image_convoll.getPtr<sl::uchar4>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_depthl_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadl, tunnelVision, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
-            convolutionColumns(gpu_Image_renderr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_convolr.getPtr<sl::uchar4>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_depthr_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadr, tunnelVision, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
-
+            
+            
+                if (shifting) {
+                    colorShift(initialleft.getPtr<sl::uchar4>(MEM::GPU), dst1l.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_image_left.getStep(MEM::GPU), yellow);
+                    colorShift(initialright.getPtr<sl::uchar4>(MEM::GPU), dst1r.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_image_right.getStep(MEM::GPU), yellow);
+                }
+                else if (!shifting) {
+                    dst1l = initialleft;
+                    dst1r = initialright;
+                }
+                if (contrastloss) {
+                    contrast(dst1l.getPtr<sl::uchar4>(MEM::GPU), gpu_transforml.getPtr<sl::uchar4>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_image_left.getStep(MEM::GPU), p);
+                    contrast(dst1r.getPtr<sl::uchar4>(MEM::GPU), gpu_transformr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_image_right.getStep(MEM::GPU), p);
+                }
+                else if (!contrastloss) {
+                    gpu_transforml = dst1l;
+                    gpu_transformr = dst1r;
+                }
+                if (gaussian) {
+                  convolutionRows(gpu_image_convoll.getPtr<sl::uchar4>(MEM::GPU), gpu_transforml.getPtr<sl::uchar4>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_depthl_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadl, tunnelVision, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
+                  convolutionRows(gpu_image_convolr.getPtr<sl::uchar4>(MEM::GPU), gpu_transformr.getPtr<sl::uchar4>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_depthr_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadr, tunnelVision, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
+                }
+                else if(!gaussian){
+                    gpu_image_convoll = gpu_transforml;
+                    gpu_image_convolr = gpu_transformr;
+                
+                }
+                //if(gaussian2){
+                convolutionColumns(gpu_Image_renderl.getPtr<sl::uchar4>(MEM::GPU), gpu_image_convoll.getPtr<sl::uchar4>(MEM::GPU), gpu_depthl_normalized.getPtr<float>(MEM::GPU), gpu_image_left.getWidth(), gpu_image_left.getHeight(), gpu_depthl_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadl, tunnelVision, slMaskl.getPtr<float>(MEM::GPU), slMaskl.getStep(MEM::GPU));
+                convolutionColumns(gpu_Image_renderr.getPtr<sl::uchar4>(MEM::GPU), gpu_image_convolr.getPtr<sl::uchar4>(MEM::GPU), gpu_depthr_normalized.getPtr<float>(MEM::GPU), gpu_image_right.getWidth(), gpu_image_right.getHeight(), gpu_depthr_normalized.getStep(MEM::GPU), norm_depth_focus_point, kernelRadr, tunnelVision, slMaskr.getPtr<float>(MEM::GPU), slMaskr.getStep(MEM::GPU));
+                //}
+                //else if (!gaussian2) {
+                    //gpu_Image_renderl = gpu_image_convoll;
+                    //gpu_Image_renderr = gpu_image_convolr;
+                
+                //}
 
             
-            auto end = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> diff = end - begin;
-            std::cout << "Total time:" << diff.count() << std::endl;
-                    
 
+                    
+                
 
             //////////////////////////////////////////////////////DOWNLOAD FOR RENDER //////////////////////////////////////////////////////
             cv::Mat render_ocvl, render_ocvr; // cpu opencv mat for display purposes
             cv::Mat gpumaskdownloadl, gpumaskdownloadr;
-            
-            render_gpul.download(gpumaskdownloadl);
-            render_gpur.download(gpumaskdownloadr);
+
+
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> diff = end - begin;
+            std::cout << "Total time:" << diff.count() << std::endl;
+
+            //render_gpul.download(gpumaskdownloadl);
+            //render_gpur.download(gpumaskdownloadr);
+            if (!shifting && !contrastloss && !gaussian && !gaussian2) {
+                d_thresholdL.download(gpumaskdownloadl);
+                d_thresholdR.download(gpumaskdownloadr);
+            }
+            else {
+                render_gpul.download(gpumaskdownloadl);
+                render_gpur.download(gpumaskdownloadr);
+            }
 
             //////////////////////////////////////////////CORRECT OPENCV COLORS //////////////////////////////////////////////////////////////////////
 
@@ -739,6 +797,8 @@ int main(int argc, char** argv) {
 
 
            //////////////////////////////////////////////////////DISPLAY  ////////////////////////////////////////////////////////////////////////////////
+
+            //cv::cuda::resize()
 
             cv::imshow("ImageLeft", gpumaskdownloadl);
             cv::imshow("ImageRight", gpumaskdownloadr);
@@ -846,11 +906,6 @@ int diopterToGaussRadius(double D) {
     return (int)degreeToPixel;
 
 }
-
-
-
-
-
 
 
 
